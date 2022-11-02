@@ -3,6 +3,8 @@ import axios from "axios";
 import { SAPIBase } from "../tools/api";
 import Header from "../components/header";
 import "./css/feed.css";
+import "./single-feed"
+import SingleFeed from "./single-feed";
 
 interface IAPIResponse  { id: number, title: string, content: string }
 
@@ -11,19 +13,23 @@ const FeedPage = (props: {}) => {
   const [ NPostCount, setNPostCount ] = React.useState<number>(0);
   const [ SNewPostTitle, setSNewPostTitle ] = React.useState<string>("");
   const [ SNewPostContent, setSNewPostContent ] = React.useState<string>("");
+  const [ Edited, setEdited ] = React.useState<boolean>(false);
 
   React.useEffect( () => {
-    let BComponentExited = false;
-    const asyncFun = async () => {
-      const { data } = await axios.get<IAPIResponse[]>( SAPIBase + `/feed/getFeed?count=${ NPostCount }`);
-      console.log(data);
-      // const data = [ { id: 0, title: "test1", content: "Example body" }, { id: 1, title: "test2", content: "Example body" }, { id: 2, title: "test3", content: "Example body" } ].slice(0, NPostCount);
-      if (BComponentExited) return;
-      setLAPIResponse(data);
-    };
-    asyncFun().catch((e) => window.alert(`Error while running API Call: ${e}`));
-    return () => { BComponentExited = true; }
-  }, [ NPostCount ]);
+    if ( Edited ) setEdited(false);
+    else {
+      let BComponentExited = false;
+      const asyncFun = async () => {
+        const { data } = await axios.get<IAPIResponse[]>( SAPIBase + `/feed/getFeed?count=${ NPostCount }`);
+        console.log(data);
+        // const data = [ { id: 0, title: "test1", content: "Example body" }, { id: 1, title: "test2", content: "Example body" }, { id: 2, title: "test3", content: "Example body" } ].slice(0, NPostCount);
+        if (BComponentExited) return;
+        setLAPIResponse(data);
+      };
+      asyncFun().catch((e) => window.alert(`Error while running API Call: ${e}`));
+      return () => { BComponentExited = true; }
+    }
+  }, [ NPostCount, Edited ]);
 
   const createNewPost = () => {
     const asyncFun = async () => {
@@ -44,6 +50,14 @@ const FeedPage = (props: {}) => {
     asyncFun().catch(e => window.alert(`AN ERROR OCCURED! ${e}`));
   }
 
+  const editPost = (id:string, title:string, content:string) => {
+    const asyncFun = async () => {
+      await axios.put( SAPIBase + '/feed/editFeed', { id, title, content } );
+    }
+    asyncFun().catch(e => window.alert(`AN ERROR OCCURED! ${e}`));
+    setEdited(true);
+  }
+
   return (
     <div className="Feed">
       <Header/>
@@ -56,11 +70,7 @@ const FeedPage = (props: {}) => {
       </div>
       <div className={"feed-list"}>
         { LAPIResponse.map( (val, i) =>
-          <div key={i} className={"feed-item"}>
-            <div className={"delete-item"} onClick={(e) => deletePost(`${val.id}`)}>ⓧ</div>
-            <h3 className={"feed-title"}>{ val.title }</h3>
-            <p className={"feed-body"}>{ val.content }</p>
-          </div>
+          <SingleFeed val={val} i={i} deletePost={deletePost} editPost={editPost} />
         ) }
         <div className={"feed-item-add"}>
           Title: <input type={"text"} value={SNewPostTitle} onChange={(e) => setSNewPostTitle(e.target.value)}/>
