@@ -55,18 +55,16 @@ class FeedDB {
         }
     }
 
-    editItem = ( id, item ) => {
-        /*let BItemEdited = false;
-        this.#LDataDB = this.#LDataDB.map((value) => {
-            if (value.id === id) {
-                BItemEdited = true;
-                return { id, title: item.title, content: item.content };
-            } else {
-                return value;
-            }
-        });
-        return BItemEdited;*/
-        return true;
+    editItem = async ( id, item ) => {
+        const { title, content } = item;
+        try {
+            const OEditFiler = { _id: id };
+            const res = await FeedModel.updateOne(OEditFiler, { $set: { title: title, content: content } });
+            return true;
+        } catch (e) {
+            console.log(`[Feed-DB] Update Error: ${ e }`);
+            return false;
+        }
     }
 }
 
@@ -106,10 +104,10 @@ router.post('/deleteFeed', async (req, res) => {
     }
 })
 
-router.put('/editFeed', (req, res) => {
+router.put('/editFeed', async (req, res) => {
     try {
         const { id, title, content } = req.body;
-        const editResult = feedDBInst.editItem(parseInt(id), { title, content });
+        const editResult = await feedDBInst.editItem(id, { title, content });
         if (!editResult) return res.status(500).json({ error: "No item edited" })
         else return res.status(200).json({ isOK: true });
     } catch (e) {
