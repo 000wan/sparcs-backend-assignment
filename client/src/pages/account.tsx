@@ -23,16 +23,16 @@ const AccountPage = () => {
   const performTransaction = ( amount: number | '' ) => {
     const asyncFun = async() => {
       if (amount === '') return;
-      interface IAPIResponse { success: boolean, balance: number, msg: string };
+      interface IAPIResponse { success: boolean, balance: {old: number, new: number}, msg: string };
       const { data } = await axios.post<IAPIResponse>(SAPIBase + '/account/transaction', { credential: {username, password}, amount: amount });
       setNTransaction(0);
       if (!data.success) {
         window.alert('Transaction Failed:' + data.msg);
         return;
       }
-      window.alert(`Transaction Success! ₩${ NBalance } -> ₩${ data.balance }\nThank you for using SPARCS Bank`);
+      window.alert(`Transaction Success! ₩${ data.balance.old } -> ₩${ data.balance.new }\nThank you for using SPARCS Bank`);
       setNTransaction(0);
-      setNBalance(data.balance);
+      setNBalance(data.balance.new);
     }
     asyncFun().catch((e) => window.alert(`AN ERROR OCCURED: ${e}`));
   }
